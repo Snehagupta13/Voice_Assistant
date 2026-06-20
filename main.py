@@ -14,9 +14,17 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-
+print("MAIN START")
 from api.routes import router as http_router
+print("ROUTES IMPORTED")
 from api.websocket import router as ws_router
+print("WS IMPORTED")
+
+
+
+app = FastAPI()
+
+print("APP CREATED")
 
 app = FastAPI(title="Voice Assistant API")
 
