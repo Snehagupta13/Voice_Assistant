@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayurveda AI — Offline Clinical Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#4a7c59;--sage-light:#6a9a74;--sage-dark:#2d5c3a;
+  --cream:#F7F3ED;--cream-dark:#ede8e0;
+  --bark:#1e1508;--bark-mid:#2C2016;--gold:#C9A84C;--gold-light:#e8c96a;
+  --mist:#e8ede8;--terracotta:#C4704A;
+  --shadow:0 4px 24px rgba(30,21,8,0.10);
+  --shadow-lg:0 8px 40px rgba(30,21,8,0.16);
+  --radius:14px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--bark-mid);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--cream-dark)}
+::-webkit-scrollbar-thumb{background:var(--sage);border-radius:3px}
+
+/* Header */
+header{background:rgba(30,21,8,0.97);backdrop-filter:blur(12px);padding:0 48px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid rgba(201,168,76,0.15)}
+.logo{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:500;color:var(--cream);letter-spacing:0.3px;display:flex;align-items:center;gap:10px}
+.logo span{color:var(--gold)}
+.header-right{display:flex;align-items:center;gap:14px}
+.badge{font-size:10px;background:var(--sage);color:white;padding:5px 14px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.api-link{font-size:11px;color:rgba(201,168,76,0.7);text-decoration:none;letter-spacing:0.5px;transition:color 0.2s}
+.api-link:hover{color:var(--gold)}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0f0a04 0%,#1e1508 40%,#2a1e0c 70%,#3d2f18 100%);padding:56px 64px 56px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(74,124,89,0.12) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 20% 80%,rgba(201,168,76,0.08) 0%,transparent 50%)}
+.hero-pattern{position:absolute;right:-60px;top:-80px;font-size:420px;opacity:0.035;transform:rotate(-10deg);line-height:1;pointer-events:none;filter:blur(2px)}
+.hero-content{position:relative;z-index:1;max-width:680px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#d4aa55;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;font-weight:500}
+.hero-tag::before{content:"";width:24px;height:1px;background:var(--gold);opacity:0.6}
+.hero h1{font-family:"Cormorant Garamond",serif;font-size:clamp(48px,5.5vw,78px);font-weight:300;color:var(--cream);line-height:1.08;margin-bottom:20px;letter-spacing:-0.5px}
+.hero h1 em{font-style:italic;color:var(--gold);font-weight:400}
+.hero-desc{color:#c8b898;font-size:18px;max-width:520px;line-height:1.75;margin-bottom:36px;font-weight:300}
+.hero-stats{display:flex;gap:0;flex-wrap:wrap}
+.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:32px}
+.stat{padding:14px 18px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:10px;transition:background 0.2s}
+.stat:hover{background:rgba(255,255,255,0.10)}
+.stat-val{font-family:"Cormorant Garamond",serif;font-size:32px;font-weight:600;color:#f0d878;display:block;line-height:1;margin-bottom:6px;text-shadow:0 0 20px rgba(201,168,76,0.3)}
+.stat-label{font-size:11px;color:#9a8a68;text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
+
+/* Tabs */
+.tabs-wrapper{background:#fff;border-bottom:2px solid var(--cream-dark);padding:0 48px;display:flex;position:sticky;top:64px;z-index:100;box-shadow:0 2px 12px rgba(30,21,8,0.06)}
+.tab{padding:18px 28px;font-size:15px;font-weight:500;color:#9a8a7a;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;letter-spacing:0.2px}
+.tab:hover{color:var(--sage)}
+.tab.active{color:var(--sage);border-bottom-color:var(--sage)}
+
+/* Layout */
+.container{max-width:1240px;margin:0 auto;padding:48px 48px 80px}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+
+/* Cards */
+.card{background:#fff;border:1px solid rgba(30,21,8,0.08);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow);transition:box-shadow 0.2s}
+.card:hover{box-shadow:var(--shadow-lg)}
+.card-title{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:500;color:var(--bark-mid);margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--cream-dark);display:flex;align-items:center;gap:10px}
+
+/* Form */
+.field{margin-bottom:18px}
+label{display:block;font-size:12px;font-weight:500;color:#8a7a6a;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+input,select,textarea{width:100%;padding:13px 16px;border:1.5px solid #e8e0d4;border-radius:var(--radius-sm);font-family:"DM Sans",sans-serif;font-size:15px;color:var(--bark-mid);background:#fdfaf7;transition:all 0.2s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--sage);background:#fff;box-shadow:0 0 0 3px rgba(74,124,89,0.1)}
+textarea{resize:vertical;min-height:88px;line-height:1.6}
+.two-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Button */
+.btn{width:100%;padding:16px 20px;background:linear-gradient(135deg,var(--sage) 0%,var(--sage-dark) 100%);color:#fff;border:none;border-radius:var(--radius-sm);font-family:"DM Sans",sans-serif;font-size:16px;font-weight:500;cursor:pointer;letter-spacing:0.3px;transition:all 0.25s;margin-top:10px;box-shadow:0 4px 14px rgba(74,124,89,0.35);position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,124,89,0.45)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{background:linear-gradient(135deg,#b0bfb0,#9aaa9a);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Results */
+.result-empty{text-align:center;padding:56px 24px;color:#b0a090}
+.result-empty .icon{font-size:52px;margin-bottom:16px;opacity:0.7}
+.result-empty p{font-size:14px;line-height:1.7;color:#a09080}
+.result-content{display:none}
+.agent-badge{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#f0f8f2,#e8f5ec);border:1px solid #c0dcc8;border-radius:20px;padding:7px 16px;font-size:11px;color:var(--sage-dark);font-weight:500;letter-spacing:0.3px;margin-bottom:18px}
+.agent-badge .dot{width:6px;height:6px;background:var(--sage);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.agent-meta{background:linear-gradient(135deg,#f4faf6,#eef7f2);border:1px solid #d0e8d8;border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:18px;font-size:12px;font-family:monospace;color:#3a6a4a;line-height:1.9;white-space:pre-wrap}
+.assessment-text{font-size:15px;line-height:2;color:var(--bark-mid);white-space:pre-wrap}
+.disclaimer{margin-top:20px;padding:12px 16px;background:#fff8f2;border-left:3px solid var(--terracotta);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;color:#a05030;line-height:1.6}
+
+/* Loader */
+.loader{display:none;text-align:center;padding:56px 24px}
+.spinner{width:44px;height:44px;border:3px solid var(--cream-dark);border-top-color:var(--sage);border-radius:50%;animation:spin 0.75s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{font-size:13px;color:#8a9a8a;font-style:italic;line-height:1.7}
+
+/* Examples */
+.examples{margin-top:20px}
+.example-title{font-size:11px;font-weight:500;color:#9a8a7a;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.example-chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:7px 16px;background:var(--cream);border:1.5px solid #ddd5c8;border-radius:20px;font-size:12px;color:#6a5a4a;cursor:pointer;transition:all 0.15s;font-weight:500}
+.chip:hover{background:var(--mist);border-color:var(--sage);color:var(--sage);transform:translateY(-1px);box-shadow:0 2px 8px rgba(74,124,89,0.15)}
+
+/* Upload */
+.upload-zone{border:2px dashed #ccc4b8;border-radius:var(--radius);padding:36px 24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:linear-gradient(135deg,#fdfaf7,#f8f4ef)}
+.upload-zone:hover{border-color:var(--sage);background:linear-gradient(135deg,#f5f9f6,#eef5f0);transform:translateY(-1px);box-shadow:var(--shadow)}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:40px;margin-bottom:12px}
+.upload-zone p{font-size:13px;color:#8a7a6a;line-height:1.7}
+.upload-zone strong{color:var(--sage)}
+#tongue-preview{display:none;width:100%;max-height:240px;object-fit:cover;border-radius:var(--radius-sm);margin-top:16px;box-shadow:var(--shadow)}
+
+/* Dosha guide */
+.dosha-guide{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.dosha-card{padding:18px;border-radius:var(--radius-sm);font-size:12px;line-height:1.8;transition:transform 0.2s}
+.dosha-card:hover{transform:translateY(-2px)}
+.dosha-card.vata{background:linear-gradient(135deg,#f5f0ff,#ede6ff);border:1px solid #c8baf0}
+.dosha-card.pitta{background:linear-gradient(135deg,#fff5f0,#ffe8e0);border:1px solid #f0c8b8}
+.dosha-card.kapha{background:linear-gradient(135deg,#f0f8ff,#e2f0ff);border:1px solid #b8d4f0}
+.dosha-name{font-weight:700;font-size:14px;margin-bottom:6px}
+.dosha-symbol{font-size:20px;margin-bottom:4px}
+.vata .dosha-name{color:#5a30b0}
+.pitta .dosha-name{color:#b03010}
+.kapha .dosha-name{color:#1050a0}
+
+/* Metrics */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.metric-box{background:#fff;border:1px solid rgba(30,21,8,0.08);border-radius:var(--radius);padding:24px 20px;text-align:center;box-shadow:var(--shadow);transition:all 0.2s;position:relative;overflow:hidden}
+.metric-box::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--sage),var(--gold))}
+.metric-box:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.metric-val{font-family:"Cormorant Garamond",serif;font-size:38px;font-weight:600;color:var(--sage);display:block;line-height:1;margin-bottom:8px}
+.metric-label{font-size:10px;color:#9a8a7a;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.chart-container{background:#fff;border:1px solid rgba(30,21,8,0.08);border-radius:var(--radius);padding:28px;margin-bottom:24px;box-shadow:var(--shadow)}
+.chart-container img{width:100%;border-radius:var(--radius-sm)}
+.chart-title{font-family:"Cormorant Garamond",serif;font-size:18px;font-weight:500;color:var(--bark-mid);margin-bottom:16px}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.config-table{width:100%;border-collapse:collapse;font-size:13px}
+.config-table tr:hover td{background:#fdfaf7}
+.config-table td{padding:11px 14px;border-bottom:1px solid var(--cream-dark)}
+.config-table td:first-child{color:#8a7a6a;font-weight:500;width:50%}
+
+/* Pipeline */
+.pipeline-wrap{max-width:560px;margin:0 auto}
+.pipeline-flow{display:flex;flex-direction:column;align-items:center}
+.pipe-node{width:100%;background:#fff;border:1px solid rgba(30,21,8,0.1);border-radius:var(--radius-sm);padding:20px 24px;box-shadow:var(--shadow);transition:all 0.2s}
+.pipe-node:hover{border-color:var(--sage);box-shadow:0 4px 16px rgba(74,124,89,0.15)}
+.pipe-node-num{font-size:10px;color:var(--sage);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.pipe-node-title{font-weight:600;font-size:15px;color:var(--bark-mid);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.pipe-node-desc{font-size:12px;color:#8a7a6a;line-height:1.6}
+.pipe-arrow{width:2px;height:32px;background:linear-gradient(to bottom,var(--sage),var(--gold));position:relative}
+.pipe-arrow::after{content:"▼";position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);color:var(--gold);font-size:10px}
+.pipe-optional{font-size:10px;background:linear-gradient(135deg,#fff8e8,#fff2d0);border:1px solid #e8cc80;color:#8a6a20;padding:2px 8px;border-radius:10px;margin-left:4px;font-weight:400}
+.pipe-output{background:linear-gradient(135deg,#f0f8f4,#e8f5ec);border-color:#b0d8bc}
+.pipe-output .pipe-node-title{color:var(--sage-dark)}
+
+/* Footer */
+footer{background:var(--bark);color:#5a4a38;text-align:center;padding:32px 24px;font-size:12px;line-height:2;margin-top:80px;border-top:1px solid rgba(201,168,76,0.1)}
+footer a{color:rgba(201,168,76,0.7);text-decoration:none;transition:color 0.2s}
+footer a:hover{color:var(--gold)}
+.footer-logo{font-family:"Cormorant Garamond",serif;font-size:18px;color:rgba(247,243,237,0.5);margin-bottom:8px}
+
+/* Responsive */
+@media(max-width:1024px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){
+  .hero-right{flex:0 0 100% !important;max-width:100% !important;flex-direction:row !important;gap:12px !important}
+  .hero-right > div{flex:1}
+  .hero-content{flex:0 0 100% !important;max-width:100% !important}
+  .hero-stats{grid-template-columns:repeat(4,1fr) !important}
+  div[style*="display:flex;align-items:center;justify-content:space-between"]{flex-wrap:wrap !important}
+}
+@media(max-width:768px){
+  .hero-right{flex-direction:column !important}
+  .hero-stats{grid-template-columns:repeat(2,1fr) !important}
+}
+@media(max-width:768px){
+  header{padding:0 20px;height:56px}
+  .hero{padding:60px 20px 48px}
+  .hero h1{font-size:36px}
+  .hero-pattern{display:none}
+  .hero-stats{grid-template-columns:repeat(2,1fr) !important}
+  .tabs-wrapper{padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{padding:14px 18px;font-size:12px}
+  .container{padding:24px 20px 60px}
+  .two-col,.config-grid{grid-template-columns:1fr}
+  .two-fields,.dosha-guide{grid-template-columns:1fr}
+  .metrics-grid{grid-template-columns:repeat(2,1fr)}
+  .card{padding:24px 20px}
+  .stat{padding:12px 20px 12px 0;margin-right:20px}
+  .stat-val{font-size:26px}
+}
+@media(max-width:480px){
+  .stat-val{font-size:22px}
+  .metric-val{font-size:30px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>🌿</span>Ayurveda <span>AI</span></div>
+  <div class="header-right">
+    <a href="/docs" class="api-link" target="_blank">API Docs ↗</a>
+    <span class="badge">100% Offline</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern">🌿</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:48px;position:relative;z-index:1;max-width:1200px;margin:0 auto">
+  <div class="hero-content" style="flex:0 0 52%;max-width:52%">
+    <div class="hero-tag">MedGemma Impact Challenge 2026</div>
+    <h1>Clinical Intelligence<br>for <em>1.2 Billion</em> Lives</h1>
+    <p class="hero-desc">Fine-tuned MedGemma 4B with a 5-agent LangGraph pipeline — bringing Ayurvedic clinical expertise offline to every rural practitioner who needs it.</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-val">2.89→0.27</span>
+        <span class="stat-label">Training Loss</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">95%</span>
+        <span class="stat-label">Herb Accuracy</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">5</span>
+        <span class="stat-label">AI Agents</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">446</span>
+        <span class="stat-label">Treatment Plans</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right" style="flex:0 0 40%;max-width:380px;display:flex;flex-direction:column;gap:16px">
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.3)">
+      <div style="font-size:11px;color:#8a7a60;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">Model Architecture</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(74,124,89,0.15);border-radius:8px;border:1px solid rgba(74,124,89,0.25)">
+          <span style="font-size:13px;color:#c8b898">Base Model</span>
+          <span style="font-size:13px;color:#e8c96a;font-weight:500">MedGemma 4B</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(201,168,76,0.08);border-radius:8px;border:1px solid rgba(201,168,76,0.15)">
+          <span style="font-size:13px;color:#c8b898">Fine-tuning</span>
+          <span style="font-size:13px;color:#e8c96a;font-weight:500">LoRA r=16</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(74,124,89,0.15);border-radius:8px;border:1px solid rgba(74,124,89,0.25)">
+          <span style="font-size:13px;color:#c8b898">Pipeline</span>
+          <span style="font-size:13px;color:#e8c96a;font-weight:500">5-Agent LangGraph</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(201,168,76,0.08);border-radius:8px;border:1px solid rgba(201,168,76,0.15)">
+          <span style="font-size:13px;color:#c8b898">Deployment</span>
+          <span style="font-size:12px;color:#4CAF50;font-weight:500">● 100% Offline</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(74,124,89,0.15);border-radius:8px;border:1px solid rgba(74,124,89,0.25)">
+          <span style="font-size:13px;color:#c8b898">Vision</span>
+          <span style="font-size:13px;color:#e8c96a;font-weight:500">Multimodal ✓</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(74,124,89,0.3);border-radius:14px;padding:20px 24px;box-shadow:0 4px 24px rgba(0,0,0,0.3)">
+      <div style="font-size:10px;color:#6a5a48;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px">Training Progress</div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;color:#8a7a6a">Loss Reduction</span>
+          <span style="font-size:12px;color:#e8c96a">2.89 → 0.27</span>
+        </div>
+        <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden">
+          <div style="height:100%;width:91%;background:linear-gradient(90deg,#4a7c59,#8ab86a);border-radius:5px;box-shadow:0 0 8px rgba(74,124,89,0.4)"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;color:#8a7a6a">Herb Accuracy</span>
+          <span style="font-size:12px;color:#e8c96a">95%</span>
+        </div>
+        <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden">
+          <div style="height:100%;width:95%;background:linear-gradient(90deg,#4a7c59,#8ab86a);border-radius:5px;box-shadow:0 0 8px rgba(74,124,89,0.4)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="tabs-wrapper">
+  <div class="tab active" onclick="switchTab('assess',this)">🩺 Clinical Assessment</div>
+  <div class="tab" onclick="switchTab('tongue',this)">👅 Tongue Analysis</div>
+  <div class="tab" onclick="switchTab('training',this)">📈 Training Results</div>
+  <div class="tab" onclick="switchTab('pipeline',this)">🔄 Agent Pipeline</div>
+</div>
+
+<div class="container">
+
+  <div id="panel-assess" class="panel active">
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title"><span>🧑‍⚕️</span>Patient Information</div>
+          <div class="field"><label>Disease / Chief Complaint</label><input id="disease" type="text" placeholder="e.g. Diabetes, Hypertension, Arthritis"></div>
+          <div class="field"><label>Symptoms</label><textarea id="symptoms" placeholder="e.g. frequent urination, fatigue, increased thirst"></textarea></div>
+          <div class="two-fields">
+            <div class="field"><label>Age Group</label>
+              <select id="age_group"><option>Child (0-12)</option><option>Teen (13-19)</option><option>Adult (20-40)</option><option selected>Middle-aged (40-60)</option><option>Senior (60+)</option></select>
+            </div>
+            <div class="field"><label>Gender</label>
+              <select id="gender"><option>Male</option><option>Female</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="card-title" style="margin-top:8px"><span>📋</span>Medical Context</div>
+          <div class="field"><label>Medical History</label><input id="history" type="text" placeholder="e.g. Asthma, Heart disease, None"></div>
+          <div class="field"><label>Current Medications</label><input id="medications" type="text" placeholder="e.g. Metformin, None"></div>
+          <div class="two-fields">
+            <div class="field"><label>Stress Level</label>
+              <select id="stress"><option>Low</option><option selected>Moderate</option><option>High</option><option>Very High</option></select>
+            </div>
+            <div class="field"><label>Dietary Habits</label><input id="diet" type="text" placeholder="e.g. High sugar, Low fiber"></div>
+          </div>
+          <button class="btn" id="assess-btn" onclick="runAssessment()">✦ Get Ayurvedic Assessment</button>
+        </div>
+        <div class="examples" style="margin-top:20px">
+          <div class="example-title">Quick Examples</div>
+          <div class="example-chips">
+            <div class="chip" onclick="fillExample('Diabetes','frequent urination, fatigue, increased thirst','Middle-aged (40-60)','Male','Family history of diabetes','Metformin','High','High sugar, Low fiber')">Diabetes</div>
+            <div class="chip" onclick="fillExample('Hypertension','high blood pressure, headaches, dizziness','Senior (60+)','Female','Heart disease','Beta-blockers','Very High','High salt')">Hypertension</div>
+            <div class="chip" onclick="fillExample('Arthritis','joint pain, morning stiffness, swelling','Middle-aged (40-60)','Male','None','None','Moderate','Not specified')">Arthritis</div>
+            <div class="chip" onclick="fillExample('Bipolar Disorder','mood swings, insomnia, irritability','Adult (20-40)','Female','None','None','High','Not specified')">Bipolar Disorder</div>
+            <div class="chip" onclick="fillExample('Crohn Disease','abdominal pain, diarrhea, fatigue','Adult (20-40)','Male','None','None','High','Irregular')">Crohn Disease</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>🌿</span>Assessment Results</div>
+        <div id="result-empty" class="result-empty"><div class="icon">🌱</div><p>Fill in patient details and click the button.<br>The 4-agent pipeline will generate a<br>structured Ayurvedic assessment.</p></div>
+        <div id="result-loader" class="loader"><div class="spinner"></div><p>Running 4-agent pipeline...<br>SymptomAgent → DoshaAgent →<br>GuidanceAgent → SafetyAgent</p></div>
+        <div id="result-content" class="result-content">
+          <div class="agent-badge"><span class="dot"></span><span id="pipeline-label">4-Agent Pipeline Complete</span></div>
+          <div id="agent-meta" class="agent-meta"></div>
+          <div id="assessment-output" class="assessment-text"></div>
+          <div class="disclaimer">Educational Ayurvedic guidance only — not a medical diagnosis. Always consult a qualified Ayurvedic practitioner (BAMS) and licensed physician.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-tongue" class="panel">
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title"><span>👁️</span>Darshan — Visual Examination</div>
+          <div class="upload-zone">
+            <input type="file" accept="image/*" id="tongue-file" onchange="previewTongue(event)">
+            <div class="upload-icon">👅</div>
+            <p>Drop a tongue photo here or <strong>browse files</strong><br><small style="color:#aaa">JPG, PNG — clear photo in natural light works best</small></p>
+          </div>
+          <img id="tongue-preview" alt="Tongue preview">
+          <div class="two-fields" style="margin-top:20px">
+            <div class="field"><label>Chief Complaint</label><input id="tongue-disease" type="text" placeholder="e.g. Fatigue"></div>
+            <div class="field"><label>Additional Symptoms</label><input id="tongue-symptoms" type="text" placeholder="e.g. bloating, low energy"></div>
+          </div>
+          <button class="btn" id="tongue-btn" onclick="runTongueAnalysis()">👁️ Analyze Tongue</button>
+        </div>
+        <div class="dosha-guide">
+          <div class="dosha-card vata"><div class="dosha-symbol">💨</div><div class="dosha-name">Vata</div>Dry, cracked, thin<br>Dark coating<br>Trembling edges</div>
+          <div class="dosha-card pitta"><div class="dosha-symbol">🔥</div><div class="dosha-name">Pitta</div>Red tip or edges<br>Yellow coating<br>Inflamed, pointed</div>
+          <div class="dosha-card kapha"><div class="dosha-symbol">🌊</div><div class="dosha-name">Kapha</div>White thick coat<br>Swollen, wet<br>Scalloped edges</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>🔍</span>Darshan Analysis</div>
+        <div id="tongue-empty" class="result-empty"><div class="icon">👁️</div><p>Upload a tongue photo to receive an Ayurvedic visual diagnosis using MedGemma vision capability.</p></div>
+        <div id="tongue-loader" class="loader"><div class="spinner"></div><p>Running 5-agent multimodal pipeline...<br>VisionAgent → SymptomAgent → DoshaAgent →<br>GuidanceAgent → SafetyAgent</p></div>
+        <div id="tongue-content" class="result-content">
+          <div class="agent-badge"><span class="dot"></span><span>5-Agent Multimodal Pipeline Complete</span></div>
+          <div id="tongue-meta" class="agent-meta"></div>
+          <div id="tongue-output" class="assessment-text"></div>
+          <div class="disclaimer">Educational Ayurvedic guidance only — not a medical diagnosis.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-training" class="panel">
+    <div class="metrics-grid">
+      <div class="metric-box"><span class="metric-val">2.89</span><div class="metric-label">Start Loss</div></div>
+      <div class="metric-box"><span class="metric-val">0.27</span><div class="metric-label">Final Train Loss</div></div>
+      <div class="metric-box"><span class="metric-val">0.36</span><div class="metric-label">Final Eval Loss</div></div>
+      <div class="metric-box"><span class="metric-val">95%</span><div class="metric-label">Herb Accuracy</div></div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title">📈 Training Loss Curves</div>
+      <img src="/static/training_curves.png" alt="Training curves" onerror="this.style.display='none'">
+    </div>
+    <div class="config-grid">
+      <div class="card">
+        <div class="card-title"><span>⚙️</span>Training Configuration</div>
+        <table class="config-table">
+          <tr><td>Base Model</td><td>google/medgemma-4b-it</td></tr>
+          <tr><td>Method</td><td>LoRA (r=16, alpha=32)</td></tr>
+          <tr><td>Trainable Params</td><td>11.9M (0.28%)</td></tr>
+          <tr><td>Epochs</td><td>3</td></tr>
+          <tr><td>Batch Size</td><td>4</td></tr>
+          <tr><td>Learning Rate</td><td>2e-4</td></tr>
+          <tr><td>Precision</td><td>bfloat16</td></tr>
+          <tr><td>Hardware</td><td>NVIDIA H100 80GB</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>📊</span>Epoch Results</div>
+        <table class="config-table">
+          <tr><td>Epoch 1 Train</td><td>0.6184</td></tr>
+          <tr><td>Epoch 1 Eval</td><td>0.3555</td></tr>
+          <tr><td>Epoch 2 Train</td><td>0.3091</td></tr>
+          <tr><td>Epoch 2 Eval</td><td>0.3451</td></tr>
+          <tr><td>Epoch 3 Train</td><td>0.2692</td></tr>
+          <tr><td>Epoch 3 Eval</td><td>0.3619</td></tr>
+          <tr><td>Train split</td><td>401 samples</td></tr>
+          <tr><td>Eval split</td><td>45 samples</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-pipeline" class="panel">
+    <div class="pipeline-wrap">
+      <div class="card">
+        <div class="card-title"><span>🔄</span>5-Agent LangGraph Pipeline</div>
+        <div class="pipeline-flow">
+          <div class="pipe-node"><div class="pipe-node-num">Input</div><div class="pipe-node-title">🧑‍⚕️ Patient Input</div><div class="pipe-node-desc">Disease, symptoms, age, gender, medical history, medications, stress level, dietary habits — plus optional tongue image for multimodal analysis</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node"><div class="pipe-node-num">Agent 1</div><div class="pipe-node-title">👁️ VisionAgent <span class="pipe-optional">if image provided</span></div><div class="pipe-node-desc">MedGemma 4B vision analyzes tongue coating, texture, color, and edges to identify Vata/Pitta/Kapha visual indicators</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node"><div class="pipe-node-num">Agent 2</div><div class="pipe-node-title">🔎 SymptomAgent</div><div class="pipe-node-desc">Keyword scoring assigns Vata/Pitta/Kapha weights. Merges visual dosha at x2 weight when image is present</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node"><div class="pipe-node-num">Agent 3</div><div class="pipe-node-title">⚖️ DoshaAgent</div><div class="pipe-node-desc">Maps primary dosha imbalance to treatment principles, herb categories, yoga type, and dietary approach</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node"><div class="pipe-node-num">Agent 4</div><div class="pipe-node-title">🤖 GuidanceAgent</div><div class="pipe-node-desc">Fine-tuned MedGemma 4B + LoRA generates full structured clinical assessment with herbs, formulations, diet, yoga, and prognosis</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node"><div class="pipe-node-num">Agent 5</div><div class="pipe-node-title">🛡️ SafetyAgent</div><div class="pipe-node-desc">Validates output, removes overconfident claims, appends mandatory BAMS practitioner consultation disclaimer</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-node pipe-output"><div class="pipe-node-num">Output</div><div class="pipe-node-title">✅ Final Assessment</div><div class="pipe-node-desc">Dosha analysis + Herbs + Formulation + Diet + Yoga + Prevention + Prognosis + Patient recommendations</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-logo">🌿 Ayurveda AI</div>
+  <div>MedGemma Impact Challenge 2026 — All processing is 100% local. No patient data leaves this device.</div>
+  <div>Powered by <a href="https://huggingface.co/google/medgemma-4b-it" target="_blank">google/medgemma-4b-it</a> fine-tuned with LoRA on 446 Ayurvedic treatment plans</div>
+</footer>
+
+<script>
+const API="http://localhost:8002";
+function switchTab(name,el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("panel-"+name).classList.add("active");
+  window.scrollTo({top:document.querySelector(".tabs-wrapper").offsetTop-64,behavior:"smooth"});
+}
+function fillExample(disease,symptoms,age,gender,history,meds,stress,diet){
+  document.getElementById("disease").value=disease;
+  document.getElementById("symptoms").value=symptoms;
+  document.getElementById("age_group").value=age;
+  document.getElementById("gender").value=gender;
+  document.getElementById("history").value=history;
+  document.getElementById("medications").value=meds;
+  document.getElementById("stress").value=stress;
+  document.getElementById("diet").value=diet;
+}
+async function runAssessment(){
+  const disease=document.getElementById("disease").value.trim();
+  const symptoms=document.getElementById("symptoms").value.trim();
+  if(!disease||!symptoms){alert("Please fill in Disease and Symptoms.");return;}
+  document.getElementById("result-empty").style.display="none";
+  document.getElementById("result-content").style.display="none";
+  document.getElementById("result-loader").style.display="block";
+  document.getElementById("assess-btn").disabled=true;
+  document.getElementById("assess-btn").textContent="Processing...";
+  try{
+    const res=await fetch(API+"/api/assess",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({disease,symptoms,age_group:document.getElementById("age_group").value,
+        gender:document.getElementById("gender").value,
+        medical_history:document.getElementById("history").value||"None",
+        current_medications:document.getElementById("medications").value||"None",
+        stress_levels:document.getElementById("stress").value,
+        dietary_habits:document.getElementById("diet").value||"Not specified"})});
+    const data=await res.json();
+    showResult(data.assessment,data.pipeline,"result");
+  }catch(e){
+    alert("API error: "+e.message+"\nMake sure FastAPI is running on port 8001.");
+    document.getElementById("result-empty").style.display="block";
+  }finally{
+    document.getElementById("result-loader").style.display="none";
+    document.getElementById("assess-btn").disabled=false;
+    document.getElementById("assess-btn").textContent="Get Ayurvedic Assessment";
+  }
+}
+function showResult(assessment,pipeline,prefix){
+  document.getElementById(prefix+"-content").style.display="block";
+  if(prefix==="result")document.getElementById("pipeline-label").textContent=pipeline+" Complete";
+  let meta="",output=assessment;
+  if(assessment.includes("---\n\n")){const parts=assessment.split("---\n\n");if(parts.length>=2){meta=parts[0];output=parts.slice(1).join("---\n\n");}}
+  const metaEl=document.getElementById(prefix==="result"?"agent-meta":"tongue-meta");
+  const outEl=document.getElementById(prefix==="result"?"assessment-output":"tongue-output");
+  metaEl.textContent=meta;metaEl.style.display=meta?"block":"none";
+  outEl.textContent=output;
+}
+function previewTongue(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{const p=document.getElementById("tongue-preview");p.src=e.target.result;p.style.display="block";};
+  reader.readAsDataURL(file);
+}
+async function runTongueAnalysis(){
+  const file=document.getElementById("tongue-file").files[0];
+  if(!file){alert("Please upload a tongue image first.");return;}
+  document.getElementById("tongue-empty").style.display="none";
+  document.getElementById("tongue-content").style.display="none";
+  document.getElementById("tongue-loader").style.display="block";
+  document.getElementById("tongue-btn").disabled=true;
+  document.getElementById("tongue-btn").textContent="Analyzing...";
+  try{
+    const base64=await fileToBase64(file);
+    const res=await fetch(API+"/api/tongue",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({image_base64:base64,
+        disease:document.getElementById("tongue-disease").value||"General Checkup",
+        symptoms:document.getElementById("tongue-symptoms").value||"Visual examination"})});
+    const data=await res.json();
+    showResult(data.assessment,data.pipeline,"tongue");
+  }catch(e){
+    alert("API error: "+e.message);
+    document.getElementById("tongue-empty").style.display="block";
+  }finally{
+    document.getElementById("tongue-loader").style.display="none";
+    document.getElementById("tongue-btn").disabled=false;
+    document.getElementById("tongue-btn").textContent="Analyze Tongue";
+  }
+}
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result.split(",")[1]);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+</body>
+</html>

@@ -15,5 +15,3 @@ wheels/
 # Dependencies
 node_modules/
 
-# Embedded repos
-Ayurveda-ai/
