@@ -2,6 +2,6 @@ services:
   - type: web
     name: voice-assistant
     env: python
-    root: voice_assistant
-    startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
-    buildCommand: ""
+    root: .
+    buildCommand: uv sync --compile-bytecode
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT

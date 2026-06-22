@@ -1,4 +1,5 @@
 from pipecat.processors.frame_processor import FrameProcessor
+import torch
 import whisperx
 import os
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ class PyannoteProcessor(FrameProcessor):
 
     def __init__(self):
         super().__init__()
-        self.device = "cuda"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.diarize_model = DiarizationPipeline(
             token=os.getenv("HF_TOKEN"),
             device=self.device

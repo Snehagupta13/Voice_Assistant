@@ -1,4 +1,5 @@
 from pipecat.processors.frame_processor import FrameProcessor
+import torch
 import whisperx
 
 from frames import AudioFileFrame
@@ -8,7 +9,7 @@ class WhisperProcessor(FrameProcessor):
 
     def __init__(self):
         super().__init__()
-        self.device = "cuda"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = whisperx.load_model("large-v3", device=self.device)
 
     async def process_frame(self, frame, direction):
